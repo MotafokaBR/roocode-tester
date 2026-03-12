@@ -2,12 +2,16 @@ package com.aliasforwarder.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Client for the MXroute API. Creates email forwarders and checks for
@@ -20,17 +24,21 @@ public class MxrouteService {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
     private final WebClient.Builder webClientBuilder;
+    private final String mxrouteApiUrl;
 
-    public MxrouteService(WebClient.Builder webClientBuilder) {
+    public MxrouteService(WebClient.Builder webClientBuilder,
+                          @Value("${mxroute.api.url:https://mail.mxrouting.net}") String mxrouteApiUrl) {
         this.webClientBuilder = webClientBuilder;
+        this.mxrouteApiUrl = mxrouteApiUrl;
     }
 
     /**
-     * Checks if a forwarder already exists for the given alias on MXroute.
+     * Fetches all existing forwarder source addresses for a domain.
+     * Use this to check existence in bulk instead of per-alias API calls.
      *
-     * @return true if the forwarder already exists
+     * @return set of source email addresses that already have forwarders
      */
-    public boolean forwarderExists(String apiKey, String aliasEmail, String targetDomain) {
+    public Set<String> fetchExistingForwarderSources(String apiKey, String targetDomain) {
         try {
             WebClient client = buildClient(apiKey);
 
@@ -46,13 +54,19 @@ public class MxrouteService {
             if (response != null && response.containsKey("data")) {
                 @SuppressWarnings("unchecked")
                 var forwarders = (java.util.List<Map<String, Object>>) response.get("data");
-                return forwarders.stream()
-                        .anyMatch(f -> aliasEmail.equals(f.get("source")));
+                Set<String> sources = new HashSet<>();
+                for (Map<String, Object> f : forwarders) {
+                    Object source = f.get("source");
+                    if (source != null) {
+                        sources.add(source.toString());
+                    }
+                }
+                return sources;
             }
-            return false;
+            return Collections.emptySet();
         } catch (WebClientResponseException e) {
-            log.warn("Error checking forwarder existence for {}: {}", aliasEmail, e.getMessage());
-            return false;
+            log.warn("Error fetching forwarders for domain {}: {}", targetDomain, e.getMessage());
+            return Collections.emptySet();
         }
     }
 
@@ -90,13 +104,8 @@ public class MxrouteService {
     }
 
     private WebClient buildClient(String apiKey) {
-        // MXroute API base URL - configurable via environment variable
-        String baseUrl = System.getenv("MXROUTE_API_URL") != null
-                ? System.getenv("MXROUTE_API_URL")
-                : "https://mail.mxrouting.net";
-
         return webClientBuilder
-                .baseUrl(baseUrl)
+                .baseUrl(mxrouteApiUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Accept", "application/json")

@@ -11,7 +11,7 @@ interface UserInfo {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserInfo | null>(null)
-  const loading = ref(false)
+  const loading = ref(true)
 
   const isAuthenticated = computed(() => user.value?.authenticated === true)
 

@@ -5,10 +5,12 @@ import com.aliasforwarder.dto.SyncPreviewResponse;
 import com.aliasforwarder.dto.SyncRequest;
 import com.aliasforwarder.service.SyncService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,12 @@ public class SyncController {
         String userId = getUserId(principal);
         SyncJobResponse job = syncService.getJobDetail(id, userId);
         return ResponseEntity.ok(job);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleStatusError(ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode())
+                .body(Map.of("error", e.getReason() != null ? e.getReason() : "Unknown error"));
     }
 
     @ExceptionHandler(RuntimeException.class)
