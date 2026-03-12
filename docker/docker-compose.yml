@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  alias-forwarder:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: alias-forwarder
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/alias-forwarder
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-alias-forwarder}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-change-me}
+      - OIDC_ISSUER_URI=${OIDC_ISSUER_URI:-https://auth.example.com/realms/main}
+      - MXROUTE_API_URL=${MXROUTE_API_URL:-https://mail.mxrouting.net}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - alias-forwarder-net
+
+  mongo:
+    image: mongo:7-jammy
+    container_name: alias-forwarder-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - alias-forwarder-net
+
+volumes:
+  mongo-data:
+
+networks:
+  alias-forwarder-net:
+    driver: bridge
