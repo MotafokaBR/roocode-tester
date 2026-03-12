@@ -127,3 +127,6 @@ roocode-tester/
 ## License
 
 MIT
+
+## Disclaimer
+This project was developed using AI assistance.
