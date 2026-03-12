@@ -33,6 +33,10 @@ management:
     health:
       show-details: when-authorized
 
+mxroute:
+  api:
+    url: ${MXROUTE_API_URL:https://mail.mxrouting.net}
+
 logging:
   level:
     com.aliasforwarder: ${LOG_LEVEL:INFO}

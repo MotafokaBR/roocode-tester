@@ -12,10 +12,13 @@ import com.aliasforwarder.repository.SyncJobRepository;
 import com.aliasforwarder.repository.SyncLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Orchestrates the sync operation between Addy.io and MXroute.
@@ -92,6 +95,10 @@ public class SyncService {
             job.setAliasCount(aliases.size());
             cacheAliases(userId, request.getOriginDomain(), aliases);
 
+            // Fetch existing forwarders once for the domain to avoid N API calls
+            Set<String> existingForwarders = mxrouteService.fetchExistingForwarderSources(
+                    request.getMxrouteApiKey(), request.getTargetDomain());
+
             int created = 0;
             int skipped = 0;
             int failed = 0;
@@ -104,9 +111,8 @@ public class SyncService {
                 syncLog.setTimestamp(Instant.now());
 
                 try {
-                    // Check if forwarder already exists
-                    if (mxrouteService.forwarderExists(
-                            request.getMxrouteApiKey(), alias.getEmail(), request.getTargetDomain())) {
+                    // Check if forwarder already exists (using pre-fetched set)
+                    if (existingForwarders.contains(alias.getEmail())) {
                         syncLog.setStatus("SKIPPED");
                         syncLog.setForwarderCreated(false);
                         skipped++;
@@ -178,10 +184,10 @@ public class SyncService {
      */
     public SyncJobResponse getJobDetail(String jobId, String userId) {
         SyncJob job = syncJobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Sync job not found: " + jobId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sync job not found: " + jobId));
 
         if (!job.getUserId().equals(userId)) {
-            throw new RuntimeException("Not authorized to view this sync job");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to view this sync job");
         }
 
         SyncJobResponse response = SyncJobResponse.fromJob(job);
