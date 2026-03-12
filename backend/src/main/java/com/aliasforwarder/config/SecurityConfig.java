@@ -36,7 +36,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(requestHandler)
-                .ignoringRequestMatchers("/actuator/health")
+                .ignoringRequestMatchers("/actuator/health", "/api/auth/logout")
             );
 
         return http.build();

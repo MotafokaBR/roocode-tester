@@ -3,6 +3,7 @@ package com.aliasforwarder.service;
 import com.aliasforwarder.dto.AliasDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -25,17 +26,17 @@ public class AddyIoService {
     private static final int MAX_RATE_LIMIT_RETRIES = 5;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
-    private final WebClient.Builder webClientBuilder;
+    private final ObjectProvider<WebClient.Builder> webClientBuilderProvider;
 
-    public AddyIoService(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
+    public AddyIoService(ObjectProvider<WebClient.Builder> webClientBuilderProvider) {
+        this.webClientBuilderProvider = webClientBuilderProvider;
     }
 
     /**
      * Fetches all aliases from Addy.io and filters by the given origin domain.
      */
     public List<AliasDto> fetchAliasesByDomain(String apiKey, String originDomain) {
-        WebClient client = webClientBuilder
+        WebClient client = webClientBuilderProvider.getObject()
                 .baseUrl(ADDY_BASE_URL)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
                 .defaultHeader("Content-Type", "application/json")
