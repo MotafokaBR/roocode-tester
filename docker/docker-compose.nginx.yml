@@ -1,0 +1,28 @@
+version: '3.8'
+
+# Override file for Nginx reverse proxy
+# Usage: docker compose -f docker-compose.yml -f docker-compose.nginx.yml up -d
+
+services:
+  alias-forwarder:
+    ports: []  # Remove direct port exposure
+    networks:
+      - alias-forwarder-net
+      - nginx-proxy
+
+  # Add to your nginx config:
+  # server {
+  #     listen 443 ssl;
+  #     server_name alias.example.com;
+  #     location / {
+  #         proxy_pass http://alias-forwarder:8080;
+  #         proxy_set_header Host $host;
+  #         proxy_set_header X-Real-IP $remote_addr;
+  #         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #         proxy_set_header X-Forwarded-Proto $scheme;
+  #     }
+  # }
+
+networks:
+  nginx-proxy:
+    external: true

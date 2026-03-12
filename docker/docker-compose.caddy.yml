@@ -1,0 +1,20 @@
+version: '3.8'
+
+# Override file for Caddy reverse proxy
+# Usage: docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+
+services:
+  alias-forwarder:
+    ports: []  # Remove direct port exposure
+    networks:
+      - alias-forwarder-net
+      - caddy
+
+  # If using Caddy, add this to your Caddyfile:
+  # alias.example.com {
+  #     reverse_proxy alias-forwarder:8080
+  # }
+
+networks:
+  caddy:
+    external: true

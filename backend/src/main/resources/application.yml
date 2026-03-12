@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: native
+
+spring:
+  application:
+    name: alias-forwarder
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/alias-forwarder}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          oidc-provider:
+            client-id: ${OIDC_CLIENT_ID:alias-forwarder}
+            client-secret: ${OIDC_CLIENT_SECRET:change-me}
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          oidc-provider:
+            issuer-uri: ${OIDC_ISSUER_URI:https://auth.example.com/realms/main}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.aliasforwarder: ${LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}

@@ -1,0 +1,30 @@
+# Java / Gradle
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+*.class
+*.jar
+*.war
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+docker/.env
+*.env.local
+
+# Spring Boot static resources (copied from frontend build)
+backend/src/main/resources/static/

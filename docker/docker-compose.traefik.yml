@@ -1,0 +1,20 @@
+version: '3.8'
+
+# Override file for Traefik reverse proxy
+# Usage: docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
+
+services:
+  alias-forwarder:
+    ports: []  # Remove direct port exposure
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.alias-forwarder.rule=Host(`${APP_DOMAIN:-alias.example.com}`)
+      - traefik.http.routers.alias-forwarder.tls.certresolver=letsencrypt
+      - traefik.http.services.alias-forwarder.loadbalancer.server.port=8080
+    networks:
+      - alias-forwarder-net
+      - traefik
+
+networks:
+  traefik:
+    external: true
